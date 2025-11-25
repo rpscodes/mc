@@ -27,6 +27,16 @@ public class OrderState {
 
     public synchronized void upsertOrder(Order order) {
         orders.put(order.getId(), order);
+        
+        // Recalculate total from existing line items if any exist
+        // This handles the case where line items arrived before the order
+        List<LineItem> lineItems = lineItemsByOrder.get(order.getId());
+        if (lineItems != null && !lineItems.isEmpty()) {
+            double totalAmount = lineItems.stream()
+                    .mapToDouble(li -> li.getUnitPrice() * li.getQuantity())
+                    .sum();
+            order.setTotalAmount(totalAmount);
+        }
     }
 
     public synchronized void upsertLineItem(LineItem lineItem) {
