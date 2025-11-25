@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warehouse Dashboard - Globex</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --warehouse-primary: #2563eb;
+            --warehouse-success: #10b981;
+            --warehouse-warning: #f59e0b;
+            --warehouse-danger: #ef4444;
+            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 1rem 0;
+        }
+
+        .warehouse-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--card-shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .warehouse-header h1 {
+            margin: 0;
+            color: var(--warehouse-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0.75rem 1.25rem;
+            background: rgba(37, 99, 235, 0.1);
+            border-radius: 12px;
+            min-width: 120px;
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--warehouse-primary);
+            margin: 0;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 0.25rem 0 0 0;
+        }
+
+        .orders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .order-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(37, 99, 235, 0.2);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: var(--card-shadow);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .order-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--warehouse-primary);
+        }
+
+        .order-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--card-shadow-hover);
+            border-color: var(--warehouse-primary);
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.25rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .order-id {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--warehouse-primary);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .order-meta {
+            text-align: right;
+        }
+
+        .order-date {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin: 0.25rem 0 0 0;
+        }
+
+        .customer-name {
+            font-size: 0.9rem;
+            color: #475569;
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .items-section {
+            margin-top: 1rem;
+        }
+
+        .items-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .items-title {
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .total-items-badge {
+            background: var(--warehouse-primary);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .items-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: #f8fafc;
+            border-radius: 8px;
+            border-left: 3px solid var(--warehouse-primary);
+            transition: all 0.2s;
+        }
+
+        .item-row:hover {
+            background: #f1f5f9;
+            transform: translateX(4px);
+        }
+
+        .item-info {
+            flex: 1;
+        }
+
+        .item-name {
+            font-weight: 600;
+            color: #1e293b;
+            margin: 0 0 0.25rem 0;
+            font-size: 0.95rem;
+        }
+
+        .item-quantity {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            border: 2px solid var(--warehouse-primary);
+            font-weight: 700;
+            color: var(--warehouse-primary);
+            min-width: 60px;
+            justify-content: center;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            color: #cbd5e1;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h2 {
+            color: #64748b;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state p {
+            color: #94a3b8;
+        }
+
+        .loading-skeleton {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .skeleton-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: var(--card-shadow);
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .last-updated {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.9);
+            margin-top: 2rem;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .orders-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .warehouse-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .stats-bar {
+                width: 100%;
+                justify-content: space-around;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <div class="warehouse-header">
+            <h1>
+                <i class="fas fa-warehouse"></i>
+                Warehouse Dashboard
+            </h1>
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <p class="stat-value" id="total-orders">0</p>
+                    <p class="stat-label">Orders</p>
+                </div>
+                <div class="stat-item">
+                    <p class="stat-value" id="total-items">0</p>
+                    <p class="stat-label">Items</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="orders-container">
+            <div class="loading-skeleton">
+                <div class="skeleton-card"></div>
+                <div class="skeleton-card"></div>
+                <div class="skeleton-card"></div>
+            </div>
+        </div>
+
+        <div class="last-updated" id="last-updated">
+            Last updated: <span id="update-time">Never</span>
+        </div>
+    </main>
+
+    <script>
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch (e) {
+                return dateString;
+            }
+        }
+
+        function getProperty(obj, ...possibleNames) {
+            for (const name of possibleNames) {
+                if (obj && (obj[name] !== undefined && obj[name] !== null)) {
+                    return obj[name];
+                }
+            }
+            return null;
+        }
+
+        function renderOrders(data) {
+            const container = document.getElementById('orders-container');
+            
+            if (!data || data.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-box-open"></i>
+                        <h2>No Orders to Package</h2>
+                        <p>Waiting for new orders to arrive...</p>
+                    </div>
+                `;
+                document.getElementById('total-orders').textContent = '0';
+                document.getElementById('total-items').textContent = '0';
+                return;
+            }
+
+            // Calculate totals
+            const totalOrders = data.length;
+            const totalItems = data.reduce((sum, order) => {
+                return sum + (getProperty(order, 'totalItems', 'total_items') || 0);
+            }, 0);
+
+            document.getElementById('total-orders').textContent = totalOrders;
+            document.getElementById('total-items').textContent = totalItems;
+
+            // Render order cards
+            const html = data.map(order => {
+                const orderId = getProperty(order, 'orderId', 'order_id') || 'N/A';
+                const customerName = getProperty(order, 'customerName', 'customer_name') || 'Unknown';
+                const createdAt = getProperty(order, 'createdAt', 'created_at');
+                const items = getProperty(order, 'items') || [];
+                const totalItems = getProperty(order, 'totalItems', 'total_items') || 0;
+
+                const itemsHtml = items.length > 0
+                    ? items.map(item => {
+                        const productName = getProperty(item, 'productName', 'product_name') || 'Unknown Product';
+                        const quantity = getProperty(item, 'quantity') || 0;
+                        return `
+                            <li class="item-row">
+                                <div class="item-info">
+                                    <p class="item-name">${productName}</p>
+                                </div>
+                                <div class="item-quantity">
+                                    <i class="fas fa-box"></i>
+                                    <span>${quantity}</span>
+                                </div>
+                            </li>
+                        `;
+                    }).join('')
+                    : '<li class="item-row"><div class="item-info"><p class="item-name" style="color: #94a3b8;">No items available</p></div></li>';
+
+                return `
+                    <div class="order-card">
+                        <div class="order-header">
+                            <div>
+                                <h2 class="order-id">
+                                    <i class="fas fa-shopping-cart"></i>
+                                    ${orderId}
+                                </h2>
+                                <p class="customer-name">
+                                    <i class="fas fa-user"></i> ${customerName}
+                                </p>
+                            </div>
+                            <div class="order-meta">
+                                <p class="order-date">
+                                    <i class="fas fa-clock"></i> ${formatDate(createdAt)}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="items-section">
+                            <div class="items-header">
+                                <h3 class="items-title">
+                                    <i class="fas fa-list"></i> Items to Package
+                                </h3>
+                                <span class="total-items-badge">${totalItems} items</span>
+                            </div>
+                            <ul class="items-list">
+                                ${itemsHtml}
+                            </ul>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = `<div class="orders-grid">${html}</div>`;
+        }
+
+        async function fetchData() {
+            try {
+                const response = await fetch('/api/warehouse');
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Warehouse data received:', data);
+                    renderOrders(data);
+                    document.getElementById('update-time').textContent = new Date().toLocaleString();
+                } else {
+                    const errorText = await response.text();
+                    console.error('Warehouse API error:', response.status, errorText);
+                    document.getElementById('orders-container').innerHTML = 
+                        `<div class="empty-state">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <h2>Error Loading Orders</h2>
+                            <p>Status: ${response.status}</p>
+                        </div>`;
+                }
+            } catch (error) {
+                console.error('Error fetching warehouse data:', error);
+                document.getElementById('orders-container').innerHTML = 
+                    `<div class="empty-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h2>Connection Error</h2>
+                        <p>${error.message}</p>
+                    </div>`;
+            }
+        }
+
+        // Initial load
+        fetchData();
+
+        // Auto-refresh every 5 seconds
+        setInterval(fetchData, 5000);
+    </script>
+</body>
+</html>
+

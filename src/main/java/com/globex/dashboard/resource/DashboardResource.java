@@ -2,6 +2,7 @@ package com.globex.dashboard.resource;
 
 import com.globex.dashboard.model.LoyaltyView;
 import com.globex.dashboard.model.OrderView;
+import com.globex.dashboard.model.WarehouseView;
 import com.globex.dashboard.service.OrderState;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
@@ -31,6 +32,13 @@ public class DashboardResource {
     @Produces(MediaType.APPLICATION_JSON)
     public List<LoyaltyView> getLoyalty() {
         return orderState.getLoyaltyByCustomer();
+    }
+
+    @GET
+    @Path("/warehouse")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<WarehouseView> getWarehouseOrders() {
+        return orderState.getWarehouseOrders(100);
     }
 
     @GET

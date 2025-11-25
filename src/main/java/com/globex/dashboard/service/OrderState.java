@@ -5,6 +5,7 @@ import com.globex.dashboard.model.LineItem;
 import com.globex.dashboard.model.Order;
 import com.globex.dashboard.model.LoyaltyView;
 import com.globex.dashboard.model.OrderView;
+import com.globex.dashboard.model.WarehouseView;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -128,6 +129,38 @@ public class OrderState {
                 .filter(order -> order != null && order.getCustomerId() != null)
                 .map(Order::getCustomerId)
                 .collect(Collectors.toSet());
+    }
+
+    public synchronized List<WarehouseView> getWarehouseOrders(int limit) {
+        return orders.values().stream()
+                .filter(order -> order != null && order.getId() != null)
+                .sorted(Comparator.comparing(
+                    (Order order) -> order.getCreatedAt() != null ? order.getCreatedAt() : Instant.EPOCH,
+                    Comparator.nullsLast(Comparator.naturalOrder())
+                ).reversed())
+                .limit(limit)
+                .map(order -> {
+                    String customerId = order.getCustomerId();
+                    Customer customer = customerId != null ? customers.get(customerId) : null;
+                    String customerName = customer != null ? customer.getName() : "Unknown";
+                    
+                    // Get line items for this order
+                    List<LineItem> lineItems = lineItemsByOrder.getOrDefault(order.getId(), new ArrayList<>());
+                    List<WarehouseView.LineItemView> itemViews = lineItems.stream()
+                            .map(li -> new WarehouseView.LineItemView(
+                                    li.getProductName() != null ? li.getProductName() : "Unknown Product",
+                                    li.getQuantity()
+                            ))
+                            .collect(Collectors.toList());
+                    
+                    return new WarehouseView(
+                            order.getId(),
+                            customerName,
+                            order.getCreatedAt() != null ? order.getCreatedAt() : Instant.now(),
+                            itemViews
+                    );
+                })
+                .collect(Collectors.toList());
     }
 }
 
