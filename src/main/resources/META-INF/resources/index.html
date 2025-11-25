@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Globex Orders & Loyalty Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <style>
+        .loyalty-card {
+            border: 1px solid var(--pico-border-color);
+            border-radius: var(--pico-border-radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background: var(--pico-card-background-color);
+        }
+        .loyalty-rank {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--pico-primary-color);
+        }
+        .loyalty-points {
+            font-size: 1.25rem;
+            color: var(--pico-primary-color);
+            margin-top: 0.5rem;
+        }
+        .last-updated {
+            text-align: center;
+            color: var(--pico-muted-color);
+            margin-top: 2rem;
+            font-size: 0.9rem;
+        }
+        header {
+            margin-bottom: 2rem;
+        }
+        section {
+            margin-bottom: 3rem;
+        }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <header>
+            <h1>Globex Orders & Loyalty Dashboard</h1>
+            <p>Real-time CDC data from Kafka</p>
+        </header>
+
+        <section>
+            <h2>Loyalty Leaderboard</h2>
+            <div id="loyalty-container">
+                <p>Loading...</p>
+            </div>
+        </section>
+
+        <section>
+            <h2>Recent Orders</h2>
+            <div id="orders-container">
+                <p>Loading...</p>
+            </div>
+        </section>
+
+        <div class="last-updated" id="last-updated">
+            Last updated: <span id="update-time">Never</span>
+        </div>
+    </main>
+
+    <script>
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD'
+            }).format(amount);
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleString();
+            } catch (e) {
+                return dateString;
+            }
+        }
+
+        function renderLoyalty(data) {
+            const container = document.getElementById('loyalty-container');
+            if (!data || data.length === 0) {
+                container.innerHTML = '<p>No loyalty data available</p>';
+                return;
+            }
+
+            const html = data.map((customer, index) => `
+                <div class="loyalty-card">
+                    <div class="loyalty-rank">#${index + 1}</div>
+                    <h3>${customer.customerName || 'Unknown'}</h3>
+                    <p><strong>Total Spend:</strong> ${formatCurrency(customer.totalSpend)}</p>
+                    <div class="loyalty-points">
+                        <strong>${customer.loyaltyPoints.toLocaleString()}</strong> points
+                    </div>
+                </div>
+            `).join('');
+
+            container.innerHTML = html;
+        }
+
+        function renderOrders(data) {
+            const container = document.getElementById('orders-container');
+            if (!data || data.length === 0) {
+                container.innerHTML = '<p>No orders available</p>';
+                return;
+            }
+
+            const tableHtml = `
+                <table role="grid">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Customer</th>
+                            <th>Total</th>
+                            <th>Created</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.map(order => `
+                            <tr>
+                                <td>${order.orderId}</td>
+                                <td>${order.customerName || 'Unknown'}</td>
+                                <td>${formatCurrency(order.totalAmount)}</td>
+                                <td>${formatDate(order.createdAt)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            container.innerHTML = tableHtml;
+        }
+
+        async function fetchData() {
+            try {
+                const [loyaltyResponse, ordersResponse] = await Promise.all([
+                    fetch('/api/loyalty'),
+                    fetch('/api/orders')
+                ]);
+
+                if (loyaltyResponse.ok) {
+                    const loyaltyData = await loyaltyResponse.json();
+                    renderLoyalty(loyaltyData);
+                } else {
+                    const errorText = await loyaltyResponse.text();
+                    console.error('Loyalty API error:', loyaltyResponse.status, errorText);
+                    document.getElementById('loyalty-container').innerHTML = 
+                        `<p>Error loading loyalty data (${loyaltyResponse.status})</p>`;
+                }
+
+                if (ordersResponse.ok) {
+                    const ordersData = await ordersResponse.json();
+                    console.log('Orders data received:', ordersData);
+                    renderOrders(ordersData);
+                } else {
+                    const errorText = await ordersResponse.text();
+                    console.error('Orders API error:', ordersResponse.status, errorText);
+                    document.getElementById('orders-container').innerHTML = 
+                        `<p>Error loading orders (${ordersResponse.status}): ${errorText}</p>`;
+                }
+
+                document.getElementById('update-time').textContent = new Date().toLocaleString();
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                document.getElementById('loyalty-container').innerHTML = 
+                    `<p>Error loading data: ${error.message}</p>`;
+                document.getElementById('orders-container').innerHTML = 
+                    `<p>Error loading data: ${error.message}</p>`;
+            }
+        }
+
+        // Initial load
+        fetchData();
+
+        // Auto-refresh every 5 seconds
+        setInterval(fetchData, 5000);
+    </script>
+</body>
+</html>
+

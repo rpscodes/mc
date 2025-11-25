@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cdc-dashboard
+  labels:
+    app: cdc-dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cdc-dashboard
+  template:
+    metadata:
+      labels:
+        app: cdc-dashboard
+    spec:
+      containers:
+      - name: cdc-dashboard
+        image: cdc-dashboard:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        env:
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          value: "PLACEHOLDER_BOOTSTRAP_SERVERS"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /q/health/live
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /q/health/ready
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+
