@@ -5,35 +5,282 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Globex Orders & Loyalty Dashboard</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        :root {
+            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --gradient-gold: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+            --gradient-silver: linear-gradient(135deg, #e0e0e0 0%, #bdbdbd 100%);
+            --gradient-bronze: linear-gradient(135deg, #d4a574 0%, #b8860b 100%);
+            --gradient-default: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .loyalty-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
         .loyalty-card {
-            border: 1px solid var(--pico-border-color);
-            border-radius: var(--pico-border-radius);
-            padding: 1rem;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: var(--card-shadow);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .loyalty-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-default);
+            transition: height 0.3s ease;
+        }
+
+        .loyalty-card.rank-1::before {
+            background: var(--gradient-gold);
+            height: 6px;
+        }
+
+        .loyalty-card.rank-2::before {
+            background: var(--gradient-silver);
+            height: 5px;
+        }
+
+        .loyalty-card.rank-3::before {
+            background: var(--gradient-bronze);
+            height: 5px;
+        }
+
+        .loyalty-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--card-shadow-hover);
+        }
+
+        .loyalty-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             margin-bottom: 1rem;
-            background: var(--pico-card-background-color);
         }
+
         .loyalty-rank {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: var(--pico-primary-color);
-        }
-        .loyalty-points {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
             font-size: 1.25rem;
-            color: var(--pico-primary-color);
-            margin-top: 0.5rem;
+            font-weight: 700;
+            color: #4a5568;
         }
+
+        .loyalty-rank i {
+            font-size: 1.5rem;
+        }
+
+        .loyalty-card.rank-1 .loyalty-rank {
+            color: #d97706;
+        }
+
+        .loyalty-card.rank-1 .loyalty-rank i {
+            color: #f59e0b;
+        }
+
+        .loyalty-card.rank-2 .loyalty-rank {
+            color: #6b7280;
+        }
+
+        .loyalty-card.rank-2 .loyalty-rank i {
+            color: #9ca3af;
+        }
+
+        .loyalty-card.rank-3 .loyalty-rank {
+            color: #92400e;
+        }
+
+        .loyalty-card.rank-3 .loyalty-rank i {
+            color: #b45309;
+        }
+
+        .customer-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--gradient-default);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .loyalty-card.rank-1 .customer-avatar {
+            background: var(--gradient-gold);
+        }
+
+        .loyalty-card.rank-2 .customer-avatar {
+            background: var(--gradient-silver);
+            color: #4a5568;
+        }
+
+        .loyalty-card.rank-3 .customer-avatar {
+            background: var(--gradient-bronze);
+        }
+
+        .customer-info {
+            flex: 1;
+            margin-left: 1rem;
+        }
+
+        .customer-name {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1a202c;
+            margin: 0 0 0.25rem 0;
+        }
+
+        .customer-id {
+            font-size: 0.875rem;
+            color: #718096;
+            margin: 0;
+        }
+
+        .loyalty-metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1.25rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .metric {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #718096;
+            font-weight: 600;
+        }
+
+        .metric-value {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: #2d3748;
+        }
+
+        .metric-value.points {
+            color: #667eea;
+        }
+
+        .metric-value.spend {
+            color: #10b981;
+        }
+
+        .metric-icon {
+            margin-right: 0.5rem;
+            opacity: 0.7;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding: 1rem;
+        }
+
+        .pagination button {
+            padding: 0.5rem 1rem;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .pagination button:hover:not(:disabled) {
+            background: #f7fafc;
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination button.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .pagination-info {
+            margin: 0 1rem;
+            color: #718096;
+            font-size: 0.875rem;
+        }
+
+        .loading-skeleton {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .skeleton-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: var(--card-shadow);
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
         .last-updated {
             text-align: center;
             color: var(--pico-muted-color);
             margin-top: 2rem;
             font-size: 0.9rem;
         }
+
         header {
             margin-bottom: 2rem;
         }
+
         section {
             margin-bottom: 3rem;
+        }
+
+        @media (max-width: 768px) {
+            .loyalty-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -47,8 +294,13 @@
         <section>
             <h2>Loyalty Leaderboard</h2>
             <div id="loyalty-container">
-                <p>Loading...</p>
+                <div class="loading-skeleton">
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
+                </div>
             </div>
+            <div id="pagination-container" class="pagination" style="display: none;"></div>
         </section>
 
         <section>
@@ -81,25 +333,158 @@
             }
         }
 
+        // Pagination state
+        let currentPage = 1;
+        const itemsPerPage = 12;
+
+        // Helper to safely get property value (handles camelCase and snake_case)
+        function getProperty(obj, ...possibleNames) {
+            for (const name of possibleNames) {
+                if (obj && (obj[name] !== undefined && obj[name] !== null)) {
+                    return obj[name];
+                }
+            }
+            return 0;
+        }
+
+        function getInitials(name) {
+            if (!name) return '?';
+            const parts = name.trim().split(/\s+/);
+            if (parts.length >= 2) {
+                return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+            }
+            return name.substring(0, 2).toUpperCase();
+        }
+
+        function getRankIcon(rank) {
+            if (rank === 1) return '<i class="fas fa-trophy"></i>';
+            if (rank === 2) return '<i class="fas fa-medal"></i>';
+            if (rank === 3) return '<i class="fas fa-award"></i>';
+            return '<i class="fas fa-star"></i>';
+        }
+
         function renderLoyalty(data) {
             const container = document.getElementById('loyalty-container');
+            const paginationContainer = document.getElementById('pagination-container');
+            
             if (!data || data.length === 0) {
                 container.innerHTML = '<p>No loyalty data available</p>';
+                paginationContainer.style.display = 'none';
                 return;
             }
 
-            const html = data.map((customer, index) => `
-                <div class="loyalty-card">
-                    <div class="loyalty-rank">#${index + 1}</div>
-                    <h3>${customer.customerName || 'Unknown'}</h3>
-                    <p><strong>Total Spend:</strong> ${formatCurrency(customer.totalSpend)}</p>
-                    <div class="loyalty-points">
-                        <strong>${customer.loyaltyPoints.toLocaleString()}</strong> points
-                    </div>
-                </div>
-            `).join('');
+            // Calculate pagination
+            const totalPages = Math.ceil(data.length / itemsPerPage);
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const pageData = data.slice(startIndex, endIndex);
 
-            container.innerHTML = html;
+            // Render cards
+            const html = pageData.map((customer, index) => {
+                const globalRank = startIndex + index + 1;
+                const rankClass = globalRank <= 3 ? `rank-${globalRank}` : '';
+                const customerName = getProperty(customer, 'customerName', 'customer_name') || 'Unknown';
+                const initials = getInitials(customerName);
+                
+                return `
+                    <div class="loyalty-card ${rankClass}">
+                        <div class="loyalty-card-header">
+                            <div class="loyalty-rank">
+                                ${getRankIcon(globalRank)}
+                                <span>#${globalRank}</span>
+                            </div>
+                            <div class="customer-avatar">${initials}</div>
+                        </div>
+                        <div class="customer-info">
+                            <h3 class="customer-name">${getProperty(customer, 'customerName', 'customer_name') || 'Unknown'}</h3>
+                            <p class="customer-id">ID: ${getProperty(customer, 'customerId', 'customer_id') || 'N/A'}</p>
+                        </div>
+                        <div class="loyalty-metrics">
+                            <div class="metric">
+                                <span class="metric-label">
+                                    <i class="fas fa-coins metric-icon"></i>Loyalty Points
+                                </span>
+                                <span class="metric-value points">${(getProperty(customer, 'loyaltyPoints', 'loyalty_points') || 0).toLocaleString()}</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">
+                                    <i class="fas fa-dollar-sign metric-icon"></i>Total Spend
+                                </span>
+                                <span class="metric-value spend">${formatCurrency(getProperty(customer, 'totalSpend', 'total_spend') || 0)}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = `<div class="loyalty-grid">${html}</div>`;
+
+            // Render pagination
+            if (totalPages > 1) {
+                renderPagination(totalPages, currentPage);
+                paginationContainer.style.display = 'flex';
+            } else {
+                paginationContainer.style.display = 'none';
+            }
+        }
+
+        function renderPagination(totalPages, currentPage) {
+            const paginationContainer = document.getElementById('pagination-container');
+            let html = '';
+
+            // Previous button
+            html += `<button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
+                <i class="fas fa-chevron-left"></i> Previous
+            </button>`;
+
+            // Page numbers
+            const maxVisiblePages = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+            if (endPage - startPage < maxVisiblePages - 1) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+
+            if (startPage > 1) {
+                html += `<button onclick="changePage(1)" ${currentPage === 1 ? 'class="active"' : ''}>1</button>`;
+                if (startPage > 2) {
+                    html += `<span class="pagination-info">...</span>`;
+                }
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                html += `<button onclick="changePage(${i})" ${currentPage === i ? 'class="active"' : ''}>${i}</button>`;
+            }
+
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    html += `<span class="pagination-info">...</span>`;
+                }
+                html += `<button onclick="changePage(${totalPages})" ${currentPage === totalPages ? 'class="active"' : ''}>${totalPages}</button>`;
+            }
+
+            // Next button
+            html += `<button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
+                Next <i class="fas fa-chevron-right"></i>
+            </button>`;
+
+            // Page info
+            const startIndex = (currentPage - 1) * itemsPerPage + 1;
+            const endIndex = Math.min(currentPage * itemsPerPage, window.loyaltyData?.length || 0);
+            html += `<span class="pagination-info">Showing ${startIndex}-${endIndex} of ${window.loyaltyData?.length || 0}</span>`;
+
+            paginationContainer.innerHTML = html;
+        }
+
+        function changePage(page) {
+            if (page < 1 || page > Math.ceil((window.loyaltyData?.length || 0) / itemsPerPage)) {
+                return;
+            }
+            currentPage = page;
+            renderLoyalty(window.loyaltyData);
+            // Scroll to top of loyalty section
+            document.getElementById('loyalty-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         function renderOrders(data) {
@@ -122,10 +507,10 @@
                     <tbody>
                         ${data.map(order => `
                             <tr>
-                                <td>${order.orderId}</td>
-                                <td>${order.customerName || 'Unknown'}</td>
-                                <td>${formatCurrency(order.totalAmount)}</td>
-                                <td>${formatDate(order.createdAt)}</td>
+                                <td>${getProperty(order, 'orderId', 'order_id') || 'N/A'}</td>
+                                <td>${getProperty(order, 'customerName', 'customer_name') || 'Unknown'}</td>
+                                <td>${formatCurrency(getProperty(order, 'totalAmount', 'total_amount') || 0)}</td>
+                                <td>${formatDate(getProperty(order, 'createdAt', 'created_at'))}</td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -144,6 +529,16 @@
 
                 if (loyaltyResponse.ok) {
                     const loyaltyData = await loyaltyResponse.json();
+                    console.log('Loyalty data received:', loyaltyData);
+                    if (loyaltyData.length > 0) {
+                        console.log('Sample loyalty record:', loyaltyData[0]);
+                        console.log('Available fields:', Object.keys(loyaltyData[0]));
+                    }
+                    window.loyaltyData = loyaltyData;
+                    // Reset to page 1 if data changed significantly
+                    if (!window.loyaltyData || Math.abs((window.loyaltyData.length || 0) - loyaltyData.length) > itemsPerPage) {
+                        currentPage = 1;
+                    }
                     renderLoyalty(loyaltyData);
                 } else {
                     const errorText = await loyaltyResponse.text();
@@ -155,6 +550,10 @@
                 if (ordersResponse.ok) {
                     const ordersData = await ordersResponse.json();
                     console.log('Orders data received:', ordersData);
+                    if (ordersData.length > 0) {
+                        console.log('Sample order record:', ordersData[0]);
+                        console.log('Available fields:', Object.keys(ordersData[0]));
+                    }
                     renderOrders(ordersData);
                 } else {
                     const errorText = await ordersResponse.text();
